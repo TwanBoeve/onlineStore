@@ -1,0 +1,116 @@
+<!DOCTYPE HTML>
+<!-- Index page of the Online Book Store. -->
+
+<html lang=”en”>
+<head>
+<title>Online Book Store</title>
+<link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+</head>
+
+<body>
+    <h1>Online Book Store</h1>
+	<div id="wrapper">
+		<div id="query">
+			<p>Which book category are you interested in?</p>
+			<div>
+				<input id="search" type="text" onkeyup="loadBooks(event)" />
+				<input id="autocomplete" type="text" onkeyup="loadBooks(event)"/>
+			</div>
+		</div>
+
+		<div id="cart">
+			<p>Shopping cart</p>
+			<p id="costs">Total costs = 0.0 Euros</p>
+			<button onclick="location.href='checkout.html'">Checkout</button>
+		</div>
+	</div>
+
+	<div id="results">
+		<h2>Found items</h2>
+		<div id="items">
+		<p>No items found so far!</p>
+		</div>
+	</div>
+
+
+<script>
+	var fetchResult = null;
+	function loadBooks(event) {
+		document.getElementById("autocomplete").innerHTML = "test";
+		var input = document.getElementById("search");
+		if (event.keyCode === 13) {//if ENTER is pressed
+			loadTable(input.value);
+		} else if (event.keyCode === 39) {//if RIGHT_ARROW is pressed
+
+			if ("tech".includes(input.value)) {
+				input.value = "tech";
+			} else if ("kids".includes(input.value)) {
+				input.value = "kids";
+			} else {
+				input.value = "";
+			}
+		}
+	}
+
+	function loadTable(category) {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (this.readyState === 4 && this.status === 200) {
+				fetchResult = JSON.parse(this.responseText);
+				var table = '<table><tr><td><strong>Name</strong></td><td><strong>Description</strong></td><td><strong>Price</strong></td></tr>';
+				for (var row = 0; row < fetchResult.length; row++) {
+					table += '<tr>';
+					table += '<td>' +  fetchResult[row].shortDescription + '</td>';
+					table += '<td>' +  fetchResult[row].longDescription + '</td>';
+					table += '<td>' +  fetchResult[row].cost + '</td>';
+					//add a button to add item to cart
+					table += '<td>' +  "<button id=\"" + fetchResult[row].itemID
+							+ "\" onclick =\"addToCart(fetchResult[" + row + "])\">Add to cart</button>" + '</td>';
+					table += '</tr>';
+				}
+				table += '</table>'
+				document.getElementById("items").innerHTML = table;
+			}
+		}
+		xhr.open("GET",window.location.href + "rest/" + category,true);
+		xhr.send();
+	}
+
+	function addToCart(item) {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (this.readyState === 4 && this.status === 204) {
+				document.getElementById("autocomplete").innerHTML = "Item added to cart!";
+				updateCart();
+			}
+		}
+		xhr.open("POST",window.location.href + "rest/cart",true);
+		xhr.setRequestHeader("Content-Type","application/json");
+		var order = "[{\"item\":" + JSON.stringify(item) + ",\"numItems\": 1}]"
+		xhr.send(order);
+	}
+
+	function updateCart() {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (this.readyState === 4 && this.status === 200) {
+				var xhr2 = new XMLHttpRequest();
+				xhr2.onreadystatechange = function() {
+					if (this.readyState === 4 && this.status === 200) {
+						var cost = this.responseText;
+						document.getElementById("costs").innerHTML = "Total costs =  " + cost + " Euros";
+					}
+				}
+				xhr2.open("GET",window.location.href + "rest/cart/costs",true);
+				xhr2.send();
+			}
+		}
+		xhr.open("GET",window.location.href + "rest/cart",true);
+		xhr.send();
+	}
+</script>
+
+
+</body>
+</html>

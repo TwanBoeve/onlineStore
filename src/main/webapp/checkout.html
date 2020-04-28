@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Checkout</title>
+<link rel="stylesheet" href="styles.css">
+
+<script>
+	window.onload = function () {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (this.readyState === 4 && this.status === 200) {
+				var fetchResult = JSON.parse(this.responseText);
+				var table = '<table><tr><td><strong>Name</strong></td><td><strong>Description</strong></td><td><strong>Price</strong></td></tr>';
+				for (var row = 0; row < fetchResult.length; row++) {
+					table += '<tr>';
+					table += '<td>' + fetchResult[row].item.shortDescription + '</td>';
+					table += '<td>' + fetchResult[row].item.longDescription + '</td>';
+					table += '<td>' + fetchResult[row].item.cost + '</td>';
+					table += '</tr>';
+				}
+				var xhr2 = new XMLHttpRequest();
+				xhr2.onreadystatechange = function () {
+					if (this.readyState === 4 && this.status === 200) {
+						var cost = this.responseText;
+						table += '<tr><td><strong>Total:</strong></td><td></td><td>' + cost + '</td></tr>';
+						table += '</table>';
+						document.getElementById("items").innerHTML = table;
+					}
+				}
+				xhr2.open("GET", window.location.href.split("/")[0] + "/onlineStore_war/rest/cart/costs", true);
+				xhr2.send();
+			}
+		}
+		xhr.open("GET",window.location.href.split("/")[0] + "/onlineStore_war/rest/cart",true);
+		xhr.send();
+	}
+</script>
+
+
+</head>
+
+<body>
+<H1>Cost statements</H1>
+
+	<div id="results">
+		<h2>Bought items</h2>
+		<div id="items">
+		</div>
+	</div>
+
+</body>
+</html>
